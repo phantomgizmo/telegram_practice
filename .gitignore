@@ -2,8 +2,11 @@
 .vscode/*
 
 #ignore pychache
-*/__pycache__
+*.pyc
 
 #ignore .env
 .env
 !.env.example
+
+#ignore downloads folder
+downloads/*

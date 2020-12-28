@@ -19,18 +19,15 @@ def sendUserPhoto(update, context):
 
     context.bot.send_photo(chat_id=update.effective_chat.id, photo=file_id)
 
-def getCommandHandler(command_name: str, function_name: str) -> Optional[CommandHandler]:
-    fun = getFun(function_name)
+def processPhoto(update, context):
+    """Save and process photo sent by user."""
+    # MAX_FILE_SIZE = 20*1024*1024
+    file_id = update.effective_message.photo[-1].file_id
+    file_dir = "./downloads/" + file_id + ".jpg"
+    file = context.bot.get_file(file_id)
+    file.download(file_dir)
 
-    if fun: return CommandHandler(command_name, fun) 
-    else: return None
-
-def getMessageHandler(function_name: str) -> Optional[MessageHandler]:
-    fun = getFun(function_name)
-
-    if fun: return MessageHandler(Filters.photo & Filters.caption_regex(r'Process'), fun)
-    else: return None
-
+    context.bot.send_message(chat_id=update.effective_chat.id, text="downloaded")
 
 def getFun(function_name: str):
     funcmembers = inspect.getmembers(sys.modules[__name__], inspect.isfunction) #get all function in current context
@@ -39,4 +36,16 @@ def getFun(function_name: str):
     fun = funcmembers.get(function_name)
 
     if fun: return fun
+    else: return None
+
+def getCommandHandler(command_name: str, function_name: str) -> Optional[CommandHandler]:
+    fun = getFun(function_name)
+
+    if fun: return CommandHandler(command_name, fun) 
+    else: return None
+
+def getMessageHandler(command_name: str, function_name: str) -> Optional[MessageHandler]:
+    fun = getFun(function_name)
+
+    if fun: return MessageHandler(Filters.photo & Filters.caption(command_name), fun)
     else: return None
