@@ -1,9 +1,12 @@
-import sys
 import inspect
+import sys
 from typing import Optional
-from telegram.ext import CommandHandler
-from telegram.ext import MessageHandler
-from telegram.ext import Filters
+from typing import List
+from typing import Dict
+
+from telegram.ext import (CommandHandler, ConversationHandler, Filters,
+                          MessageHandler, Handler)
+
 
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="Ardi entog")
@@ -29,6 +32,26 @@ def processPhoto(update, context):
 
     context.bot.send_message(chat_id=update.effective_chat.id, text="downloaded")
 
+# TODO: add menu text.
+def startDiseaseConvo(update, context):
+    MENU_TEXT = "\
+    ====Hama dan Penyakit tanaman padi===\n\
+1.Keong Mas\n\
+2.Wereng Coklat\n\
+3.Penggerek batang\n\
+4.Walang sangit\n\
+5.Penyakit HDB atau Kresek\n\
+6.Penyakit Blast"
+
+    context.bot.send_message(chat_id=update.effective_chat.id, text=MENU_TEXT)
+
+    return 0
+
+def cancelDiseaseConvo(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text='Percakapan Dibatalkan')
+
+    return ConversationHandler.END
+
 def getFun(function_name: str):
     funcmembers = inspect.getmembers(sys.modules[__name__], inspect.isfunction) #get all function in current context
     funcmembers = {key: fun for key, fun in funcmembers} #map tuple of (key, func) to a dict
@@ -38,14 +61,28 @@ def getFun(function_name: str):
     if fun: return fun
     else: return None
 
-def getCommandHandler(command_name: str, function_name: str) -> Optional[CommandHandler]:
+def createCommandHandler(command_name: str, function_name: str) -> Optional[CommandHandler]:
     fun = getFun(function_name)
 
     if fun: return CommandHandler(command_name, fun) 
     else: return None
 
-def getMessageHandler(command_name: str, function_name: str) -> Optional[MessageHandler]:
+def createMessageHandler(command_name: str, function_name: str) -> Optional[MessageHandler]:
     fun = getFun(function_name)
 
     if fun: return MessageHandler(Filters.photo & Filters.caption(command_name), fun)
+    else: return None
+
+def createConversationHandler(start_command_name: str, start_function_name: str, context_command_list: Dict[object, List[Handler]], fallbacks: List[Handler], timeout: int=None) -> Optional[ConversationHandler]:
+    fun = getFun(start_function_name)
+
+    if fun: print("GET")
+
+    # only create one entry point for simplicity.
+    if fun: return ConversationHandler(
+        entry_points=[CommandHandler(start_command_name, fun)],
+        states=context_command_list,
+        fallbacks=fallbacks,
+        conversation_timeout=timeout
+    )
     else: return None
